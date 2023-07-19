@@ -13,40 +13,56 @@ class MSecTimestamp(fields.Field):
 
     def _deserialize(self, value, attr, data, **kwargs):
         try:
-            print(f'@@@value={value}')
             return datetime.datetime.fromtimestamp(value/1000000) + datetime.timedelta(microseconds=value%1000000)
         except ValueError as error:
             raise ValidationError("Bad timestamp.") from error
 
 
 class AttachmentsSchema(Schema):
-    mimetype = fields.Str()
-    filePath = fields.Str()
+    mimetype = fields.String()
+    filePath = fields.String()
+
+
+class ListItemSchema(Schema):
+    text = fields.String()
+    isChecked = fields.Bool()
+
+
+class AnnotationSchema(Schema):
+    description = fields.String()
+    source = fields.String()
+    title = fields.String()
+    url = fields.String()
+
+
+class ShareeSchema(Schema):
+    isOwner = fields.Bool()
+    type = fields.String()
+    email = fields.String()
 
 
 class KeepNoteSchema(Schema):
-    title = fields.Str()
-    textContent = fields.Str(load_default='')
+    title = fields.String()
+    textContent = fields.String(load_default='')
     createdTimestampUsec = MSecTimestamp()
     userEditedTimestampUsec = MSecTimestamp()
     attachments = fields.List(fields.Nested(AttachmentsSchema))
+    isTrashed = fields.Bool()
+    isArchived = fields.Bool()
+    isPinned = fields.Bool()
+    color = fields.String()
+    annotations = fields.List(fields.Nested(AnnotationSchema))
+    listContent = fields.List(fields.Nested(ListItemSchema))
+    sharees = fields.List(fields.Nested(ShareeSchema))
 
 
 class KeepNote:
 
     def __init__(self, filename):
         with open(filename, 'rt') as f:
-            note = KeepNoteSchema.from_dict(json.load(f))
-
-            print(note.title)
-            print(getattr(note, 'textContent', ''))
-            print(note.createdTimestampUsec)
-            print(note.userEditedTimestampUsec)
-            print(getattr(note, 'attachments', ''))
-            # exit(0)
-
-            # [{"filePath":"175154aa763.b99d62826c8d9b61.jpg","mimetype":"image/jpeg"}]
-            # self.attachments = []
+            schema = KeepNoteSchema()
+            note = schema.load(data=json.load(f))
+            print(note)
             
 
 # enum all jsons in Keep
