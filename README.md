@@ -6,3 +6,9 @@ What should currently work:
 - actual notes
 - images
 - lists
+
+Needs:
+
+```
+pip install marshmallow
+```
