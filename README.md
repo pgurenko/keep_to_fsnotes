@@ -1,6 +1,6 @@
 # keep_to_fsnotes
 
-Converting `Google Keep` notes to the FSNotes.
+Converting [Google Keep](https://keep.google.com) notes to the [FSNotes](https://fsnot.es/).
 
 What should currently work:
 - actual notes
