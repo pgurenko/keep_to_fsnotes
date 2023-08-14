@@ -2,7 +2,9 @@
 import os
 import json
 import datetime
+import shutil
 from marshmallow import Schema, ValidationError, fields
+from pathlib import Path
 
 
 class MSecTimestamp(fields.Field):
@@ -61,11 +63,36 @@ class KeepNote:
     def __init__(self, filename):
         with open(filename, 'rt') as f:
             schema = KeepNoteSchema()
-            note = schema.load(data=json.load(f))
-            print(note)
-            
+            self.data = schema.load(data=json.load(f))
+
+    def save(self):
+        title = self.data["title"]
+        if not title:
+            title = self.data["textContent"].split('\n')[0]
+
+        title = title.replace('/', '_')
+
+        filename = f'fsnotes/{title}.md'
+        with open(filename, 'wt') as f:
+            f.write(f'{self.data["textContent"]}\n')
+
+        with open(filename, 'a') as f:
+            attachments = note.data.get('attachments', [])
+            for attachment in attachments:
+                f.write(f'![](i/{attachment["filePath"]})\n')
+                if os.path.exists(f'keep/{attachment["filePath"]}'):
+                    shutil.copy2(f'keep/{attachment["filePath"]}', f'fsnotes/i/{attachment["filePath"]}')
+
+            listContent = note.data.get('listContent', [])
+            for item in listContent:
+                f.write(f'- [{"x" if item["isChecked"] else " "}] {item["text"]}\n')
+
+        os.utime(filename, (self.data['createdTimestampUsec'].timestamp(), self.data['userEditedTimestampUsec'].timestamp()))
+
 
 # enum all jsons in Keep
+Path('fsnotes/i').mkdir(parents=True, exist_ok=True)
 for f in os.listdir('keep'):
     if f.endswith(".json"):
-        KeepNote(f'keep/{f}')
+        note = KeepNote(f'keep/{f}')
+        note.save()
